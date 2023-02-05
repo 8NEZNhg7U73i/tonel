@@ -65,15 +65,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
+
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target ${{ matrix.target }}
+
+      - name: Compress binaries
+        uses: svenstaro/upx-action@v2
+        with:
+          files: target/release/*
+          args: --best -9
+
       - name: Compress
         run: |
           cd target/${{ matrix.target }}/release
