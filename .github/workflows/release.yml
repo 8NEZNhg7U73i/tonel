@@ -124,6 +124,7 @@ jobs:
         uses: svenstaro/upx-action@v2
         with:
           files: target/${{ matrix.target }}/release/{tonels,tonelc}
+          strip: false
           args: --best -9
 
       - name: Compress
@@ -252,6 +253,7 @@ jobs:
         uses: svenstaro/upx-action@v2
         with:
           files: target/${{ matrix.target }}/release/{tonels,tonelc}
+          strip: false
           args: --best -9
 
       - name: Compress
