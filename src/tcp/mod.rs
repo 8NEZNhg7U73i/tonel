@@ -605,7 +605,7 @@ impl Stack {
                     let tuple = match tuple {
                         Ok(tuple) => tuple,
                         Err(err) => {
-                            error!("tuples_purge recv {:?} error: {err}", tuple);
+                            error!("tuples_purge recv error: {err}");
                             continue;
                         }
                     };
