@@ -605,7 +605,7 @@ impl Stack {
                     let tuple = match tuple {
                         Ok(tuple) => tuple,
                         Err(err) => {
-                            error!("tuples_purge recv {} error: {err}", self);
+                            error!("tuples_purge recv {} error: {err}", tuple);
                             continue;
                         }
                     };
@@ -616,7 +616,7 @@ impl Stack {
                     let size = match size {
                         Ok(size) => size,
                         Err(err) => {
-                            error!("Couldn't read {} tun buf: {err}", self);
+                            error!("Couldn't read {} tun buf: {err}", tuple);
                             continue;
                         }
                     };
@@ -634,7 +634,7 @@ impl Stack {
 
                     if let Some(c) = tuples.get(&tuple) {
                         if c.send((recv_buf, size)).await.is_err() {
-                            trace!("Cache hit, but receiver {} already closed, dropping packet", self);
+                            trace!("Cache hit, but receiver {} already closed, dropping packet", tuple);
                         }
                         continue;
                     }
@@ -643,7 +643,7 @@ impl Stack {
                         tuples.insert(tuple.clone(), c.clone());
                         if let Err(err) = c.send((recv_buf, size)).await {
                             drop(c);
-                            error!("Couldn't send to {} shared tuples channel: {err}", self);
+                            error!("Couldn't send to {} shared tuples channel: {err}", tuple);
                         }
                         continue;
                     }
@@ -682,7 +682,7 @@ impl Stack {
                         let tun_index = shared.tun_index.fetch_add(1, Ordering::Relaxed) % shared.tuns.len();
                         let tun = shared.tuns[tun_index].clone();
                         if let Err(err) = tun.send(&send_buf[..size]).await {
-                            error!("tun send {} error: {err}", self);
+                            error!("tun send {} error: {err}", tuple);
                         }
                     }
                 }
