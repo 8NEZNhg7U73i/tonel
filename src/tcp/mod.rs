@@ -616,7 +616,7 @@ impl Stack {
                     let size = match size {
                         Ok(size) => size,
                         Err(err) => {
-                            error!("Couldn't read {:?} tun buf: {err}", tuple);
+                            error!("Couldn't read tun buf: {err}");
                             continue;
                         }
                     };
