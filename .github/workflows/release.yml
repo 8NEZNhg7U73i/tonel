@@ -13,7 +13,7 @@ jobs:
     env:
       RUST_BACKTRACE: full
     strategy:
-      fail-fast: false
+      #fail-fast: false
       matrix:
         target:
           
@@ -142,7 +142,7 @@ jobs:
     env:
       RUST_BACKTRACE: full
     strategy:
-      #fail-fast: false
+      fail-fast: false
       matrix:
         target:
           - aarch64-apple-darwin
