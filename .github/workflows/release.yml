@@ -123,7 +123,7 @@ jobs:
       - name: Compress binaries
         uses: svenstaro/upx-action@v2
         with:
-          files: target/${{ matrix.target }}/release/*
+          files: target/${{ matrix.target }}/release/tonel*
           args: --best -9
 
       - name: Compress
@@ -250,7 +250,7 @@ jobs:
       - name: Compress binaries
         uses: svenstaro/upx-action@v2
         with:
-          files: target/${{ matrix.target }}/release/*
+          files: target/${{ matrix.target }}/release/tonel*
           args: --best -9
 
       - name: Compress
