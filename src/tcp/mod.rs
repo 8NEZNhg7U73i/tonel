@@ -223,7 +223,7 @@ impl Socket {
                             Ok(raw_buf) => match raw_buf {
                                 Ok(raw_buf) => raw_buf,
                                 Err(err) => {
-                                    error!("Incoming channel recv error: {err}");
+                                    error!("channel {} recv error: {err}", self);
                                     return None;
                                 }
                             },
@@ -231,7 +231,7 @@ impl Socket {
                                 if seq_sent {
                                     break;
                                 }
-                                trace!("Waiting for tcp recv timed out: {err}, sending ACK");
+                                trace!("Waiting for tcp {} recv timed out: {err}, sending ACK", self);
                                 if self.send_keepalive(buf, 0).await.is_none() {
                                     trace!("Connection {} unable to send idling ACK back", self);
                                     return None;
@@ -257,11 +257,11 @@ impl Socket {
                             && tcp_packet.payload().is_empty()
                         {
                             if tcp_packet.get_sequence() == 1 && seq_sent {
-                                trace!("Received final ACK");
+                                trace!("Received final ACK {}", self);
                                 seq_sent = false;
                                 continue;
                             } else if tcp_packet.get_sequence() == 0 {
-                                trace!("Received ACK, sending ACK");
+                                trace!("Received ACK, sending ACK {}", self);
                                 if self.send_keepalive(buf, 1).await.is_none() {
                                     trace!("Connection {} unable to send idling ACK back", self);
                                     return None;
@@ -283,7 +283,7 @@ impl Socket {
                 }
             }
         }
-        debug!("Waiting for tcp recv timed out on ACK, connection is broken");
+        debug!("Waiting for tcp recv timed out on ACK, connection {} is broken", self);
         None
     }
 
@@ -295,11 +295,11 @@ impl Socket {
                         self.build_tcp_packet(buf, tcp::TcpFlags::SYN | tcp::TcpFlags::ACK, None);
                     // ACK set by constructor
                     if let Err(err) = self.tun.send(&buf[..size]).await {
-                        trace!("Sent SYN + ACK error: {err}");
+                        trace!("Sent SYN + ACK error {}: {err}", self);
                         break;
                     }
                     self.state = State::SynReceived;
-                    trace!("Sent SYN + ACK to client");
+                    trace!("Sent SYN + ACK to client {}", self);
                 }
                 State::SynReceived => {
                     let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
@@ -307,12 +307,12 @@ impl Socket {
                         Ok(buf) => match buf {
                             Ok(buf) => buf,
                             Err(err) => {
-                                error!("Incoming channel recv error: {err}");
+                                error!("channel {} recv error: {err}", self);
                                 break;
                             }
                         },
                         Err(err) => {
-                            trace!("Waiting for client ACK timed out: {err}");
+                            trace!("Waiting for client {} ACK timed out: {err}", self);
                             break;
                         }
                     };
@@ -361,11 +361,11 @@ impl Socket {
                 State::Idle => {
                     let size = self.build_tcp_packet(buf, tcp::TcpFlags::SYN, None);
                     if let Err(err) = self.tun.send(&buf[..size]).await {
-                        trace!("Send SYN error: {err}");
+                        trace!("Send SYN error {}: {err}", self);
                         return None;
                     }
                     self.state = State::SynSent;
-                    trace!("Sent SYN to server");
+                    trace!("Sent SYN to server {}", self);
                 }
                 State::SynSent => {
                     let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
@@ -373,12 +373,12 @@ impl Socket {
                         Ok(packet_buf) => match packet_buf {
                             Ok(packet_buf) => packet_buf,
                             Err(err) => {
-                                trace!("incoming channel error: {err}");
+                                trace!("incoming channel {} error: {err}", self);
                                 break;
                             }
                         },
                         Err(err) => {
-                            trace!("Waiting for SYN + ACK timed out: {err}");
+                            trace!("Waiting for {} SYN + ACK timed out: {err}", self);
                             break;
                         }
                     };
@@ -411,7 +411,7 @@ impl Socket {
                         // send ACK to finish handshake
                         let size = self.build_tcp_packet(buf, tcp::TcpFlags::ACK, None);
                         if let Err(err) = self.tun.send(&buf[..size]).await {
-                            trace!("Send ACK error: {err}");
+                            trace!("Send ACK {} error: {err}", self);
                             break;
                         }
 
@@ -454,7 +454,7 @@ impl Drop for Socket {
         tokio::spawn(async move {
             for tx in tuples_purge.iter() {
                 if let Err(err) = tx.send(tuple.clone()).await {
-                    error!("Send error in tuples_purge: {err}");
+                    error!("Send error {} in tuples_purge: {err}" ,self);
                 }
             }
             if let Err(e) = tun.send(&buf[..size]).await {
@@ -605,7 +605,7 @@ impl Stack {
                     let tuple = match tuple {
                         Ok(tuple) => tuple,
                         Err(err) => {
-                            error!("tuples_purge recv error: {err}");
+                            error!("tuples_purge recv {} error: {err}", self);
                             continue;
                         }
                     };
@@ -616,7 +616,7 @@ impl Stack {
                     let size = match size {
                         Ok(size) => size,
                         Err(err) => {
-                            error!("Couldn't read tun buf: {err}");
+                            error!("Couldn't read {} tun buf: {err}", self);
                             continue;
                         }
                     };
@@ -634,7 +634,7 @@ impl Stack {
 
                     if let Some(c) = tuples.get(&tuple) {
                         if c.send((recv_buf, size)).await.is_err() {
-                            trace!("Cache hit, but receiver already closed, dropping packet");
+                            trace!("Cache hit, but receiver {} already closed, dropping packet", self);
                         }
                         continue;
                     }
@@ -643,7 +643,7 @@ impl Stack {
                         tuples.insert(tuple.clone(), c.clone());
                         if let Err(err) = c.send((recv_buf, size)).await {
                             drop(c);
-                            error!("Couldn't send to shared tuples channel: {err}");
+                            error!("Couldn't send to {} shared tuples channel: {err}", self);
                         }
                         continue;
                     }
@@ -682,7 +682,7 @@ impl Stack {
                         let tun_index = shared.tun_index.fetch_add(1, Ordering::Relaxed) % shared.tuns.len();
                         let tun = shared.tuns[tun_index].clone();
                         if let Err(err) = tun.send(&send_buf[..size]).await {
-                            error!("tun send error: {err}");
+                            error!("tun send {} error: {err}", self);
                         }
                     }
                 }
