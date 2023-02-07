@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: actions-rs/toolchain@v1
-        if: a==b
+        if: env.test == 'true'
         with:
           toolchain: stable
           target: ${{ matrix.target }}
