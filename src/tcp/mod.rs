@@ -454,11 +454,11 @@ impl Drop for Socket {
         tokio::spawn(async move {
             for tx in tuples_purge.iter() {
                 if let Err(err) = tx.send(tuple.clone()).await {
-                    error!("Send error in tuples_purge: {err} {tx}");
+                    error!("Send error in tuples_purge: {err} {:?}", tx);
                 }
             }
             if let Err(e) = tun.send(&buf[..size]).await {
-                warn!("Unable to send RST to remote {tx} end: {}", e);
+                warn!("Unable to send RST to remote end: {}", e);
             }
         });
         info!("TCP connection {} closed", self);
