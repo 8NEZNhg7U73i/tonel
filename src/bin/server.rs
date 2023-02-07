@@ -499,6 +499,9 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 error!("The request connection {tcp_sock} does not exists.");
                 continue;
             }
+            for i in addresses.iter() {
+                debug!("The address {i}.")
+            }
         };
 
         let cancellation = CancellationToken::new();
