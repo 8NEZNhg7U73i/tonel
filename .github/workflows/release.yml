@@ -16,8 +16,6 @@ jobs:
       #fail-fast: false
       matrix:
         target:
-          - x86_64-unknown-linux-gnu
-          - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-gnu
           - aarch64-unknown-linux-musl
           - arm-unknown-linux-gnueabi
@@ -36,8 +34,10 @@ jobs:
           - i686-unknown-linux-musl
           - mipsel-unknown-linux-gnu
           - mipsel-unknown-linux-musl
-          - powerpc-unknown-linux-gnu
-          - thumbv7neon-unknown-linux-gnueabihf
+          - #powerpc-unknown-linux-gnu
+          - #thumbv7neon-unknown-linux-gnueabihf
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
 
     steps:
       - uses: actions/checkout@v3
