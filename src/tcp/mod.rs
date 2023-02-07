@@ -213,7 +213,7 @@ impl Socket {
     /// A return of `None` means the TCP connection is broken
     /// and this socket must be closed.
     pub async fn recv(&self, buf: &mut [u8]) -> Option<usize> {
-        for _ in 0..3 {
+        for _ in 0..5 {
             let mut seq_sent = false;
             loop {
                 match self.state {
@@ -454,11 +454,11 @@ impl Drop for Socket {
         tokio::spawn(async move {
             for tx in tuples_purge.iter() {
                 if let Err(err) = tx.send(tuple.clone()).await {
-                    error!("Send error in tuples_purge: {err}");
+                    error!("Send error in tuples_purge: {err} {tx}");
                 }
             }
             if let Err(e) = tun.send(&buf[..size]).await {
-                warn!("Unable to send RST to remote end: {}", e);
+                warn!("Unable to send RST to remote {tx} end: {}", e);
             }
         });
         info!("TCP connection {} closed", self);
