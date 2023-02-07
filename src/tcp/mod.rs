@@ -610,7 +610,7 @@ impl Stack {
                         }
                     };
                     tuples.remove(&tuple);
-                    for i in tuples {
+                    for i in tuples.iter() {
                         trace!("tuple: {:?}", i)
                     }
                 },
