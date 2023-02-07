@@ -461,7 +461,8 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             let udp_socks: Vec<_> = {
                 let mut socks = Vec::with_capacity(udp_socks_amount);
-                for _ in 0..udp_socks_amount {
+                for i in 0..udp_socks_amount {
+                    debug!("Creating udp stream {i} to {local_addr} for {addr}.");
                     let udp_sock = match new_udp_reuseport(local_addr) {
                         Ok(udp_sock) => udp_sock,
                         Err(err) => {
@@ -571,7 +572,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                                     should_receive_handshake_packet = false;
                                     if let Some(ref p) = *handshake_packet {
                                         if tcp_sock.send(&mut buf, p).await.is_none() {
-                                            error!("Failed to send handshake packet to remote, closing connection.");
+                                            error!("Failed to send handshake packet to remote, closing connection {tcp_sock}.");
                                             break;
                                         }
                                         debug!("Sent handshake packet to: {}", tcp_sock);
