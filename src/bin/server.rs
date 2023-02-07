@@ -492,9 +492,9 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             udp_socks
         } else {
             let address = SocketAddr::new(tcp_sock.remote_addr().ip(), first_port);
+            debug!("The request connection is {tcp_sock}.");
             if let Some(tcp_peer) = addresses.get(&address) {
-                tcp_peer.udp_peers.clone();
-                error!("The request connection {tcp_sock} exists.");
+                tcp_peer.udp_peers.clone()
             } else {
                 error!("The request connection {tcp_sock} does not exists.");
                 continue;
