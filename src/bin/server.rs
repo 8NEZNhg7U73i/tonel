@@ -544,8 +544,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                     _ = packet_received_tx.send(());
                 }
                 debug!(
-                    "UDP connection closed on {}",
-                    udp_sock.local_addr().unwrap()
+                    "UDP connection closed {}", udp_sock
                 );
                 cancellation.cancel();
             });
