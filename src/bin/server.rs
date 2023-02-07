@@ -496,6 +496,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 tcp_peer.udp_peers.clone()
             } else {
                 error!("The request connection {tcp_sock} does not exists.");
+                debug!("tcp connection {tcp_peer} , {tcp_sock} , {addresses}");
                 continue;
             }
         };
