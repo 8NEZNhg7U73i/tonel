@@ -48,7 +48,7 @@ use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::time;
 
-const TIMEOUT: time::Duration = time::Duration::from_secs(3);
+const TIMEOUT: time::Duration = time::Duration::from_secs(5);
 // const RETRIES: usize = 2;
 const MPMC_BUFFER_LEN: usize = 4096;
 const MPSC_BUFFER_LEN: usize = 4096;
