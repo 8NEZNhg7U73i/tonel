@@ -495,7 +495,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             udp_socks
         } else {
-            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), tcp_sock.remote_addr().socks());
+            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), tcp_sock.remote_addr().port());
             if let Some(tcp_peer) = addresses.get(&address) {
                 debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
