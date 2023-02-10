@@ -217,6 +217,18 @@ impl Socket {
             let mut seq_sent = false;
             loop {
                 match self.state {
+                    State::Idle => {
+                        trace!(" idle connection {} ", self)
+                    }
+
+                    State::SynSent => {
+                        trace!(" SynSent connection {} ", self)
+                    }
+
+                    State::SynReceived => {
+                        trace!(" SynReceived connection {}", self)
+                    }
+
                     State::Established => {
                         let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
                         let raw_buf = match res {
