@@ -28,8 +28,8 @@ jobs:
           - armv7-unknown-linux-gnueabihf
           - armv7-unknown-linux-musleabi
           - armv7-unknown-linux-musleabihf
-          - i586-unknown-linux-gnu
-          - i586-unknown-linux-musl
+          #- i586-unknown-linux-gnu
+          #- i586-unknown-linux-musl
           - i686-unknown-linux-gnu
           - i686-unknown-linux-musl
           - mipsel-unknown-linux-gnu
