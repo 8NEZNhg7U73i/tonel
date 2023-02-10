@@ -79,6 +79,7 @@ pub fn assign_ipv6_address(device_name: &str, local: Ipv6Addr, peer: Ipv6Addr) {
     target_os = "netbsd",
     target_os = "dragonfly",
     target_os = "macos",
+    target_os = "ios"
 ))]
 pub fn assign_ipv6_address(dev_name: &str, local: Ipv6Addr) {
     {
@@ -97,6 +98,7 @@ pub fn assign_ipv6_address(dev_name: &str, local: Ipv6Addr) {
     target_os = "netbsd",
     target_os = "dragonfly",
     target_os = "macos",
+    target_os = "ios"
 ))]
 pub fn add_routes(dev_name: &str, peer: Ipv4Addr, peer6: Option<Ipv6Addr>) {
     let interface_keyword = "-interface";
@@ -131,6 +133,7 @@ pub fn add_routes(dev_name: &str, peer: Ipv4Addr, peer6: Option<Ipv6Addr>) {
     target_os = "netbsd",
     target_os = "dragonfly",
     target_os = "macos",
+    target_os = "ios"
 ))]
 pub fn delete_routes(peer: Ipv4Addr, peer6: Option<Ipv6Addr>) {
     let _ = std::process::Command::new("route")
