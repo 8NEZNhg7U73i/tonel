@@ -75,6 +75,7 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    if: env.a = a
     env:
       RUST_BACKTRACE: full
     strategy:
