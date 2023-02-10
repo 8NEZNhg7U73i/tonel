@@ -213,7 +213,7 @@ impl Socket {
     /// A return of `None` means the TCP connection is broken
     /// and this socket must be closed.
     pub async fn recv(&self, buf: &mut [u8]) -> Option<usize> {
-        for _ in 0..1 {
+        for _ in 0..2 {
             let mut seq_sent = false;
             loop {
                 match self.state {
