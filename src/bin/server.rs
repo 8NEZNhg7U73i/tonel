@@ -502,7 +502,6 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             //} else {
             //    error!("The request connection {} port {first_port} does not exists.", tcp_sock );
             //    continue;
-            }
         };
 
         let cancellation = CancellationToken::new();
