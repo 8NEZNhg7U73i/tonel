@@ -501,7 +501,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             for (socket_addr, _tcp_peer) in addresses.iter() {
                 debug!("Addresses {:?} address.", socket_addr)
             };
-            if let Some(tcp_peer) = addresses.get(&address) {
+            if first_port != 0 {
                 debug!("The request connection {} port {first_port} exists.", tcp_sock );
                 tcp_peer.udp_peers.clone()
             } else {
