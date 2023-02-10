@@ -75,7 +75,6 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    if: env.test == 'true'
     env:
       RUST_BACKTRACE: full
     strategy:
@@ -98,6 +97,7 @@ jobs:
           override: true
 
       - uses: actions-rs/cargo@v1
+        if: github.test == 'true'
         with:
           use-cross: true
           command: build
