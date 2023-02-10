@@ -149,10 +149,18 @@ impl Socket {
         self.local_addr
     }
 
+    pub fn local_port(&self) -> u16 {
+        self.local_addr
+    }
+
     pub fn remote_addr(&self) -> SocketAddr {
         self.remote_addr
     }
 
+    pub fn remote_addr(&self) -> u16 {
+        self.remote_addr
+    }
+    
     fn build_tcp_packet(&self, buf: &mut [u8], flags: u16, payload: Option<&[u8]>) -> usize {
         let ack = self.ack.load(Ordering::Relaxed);
 
