@@ -461,8 +461,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             let udp_socks: Vec<_> = {
                 let mut socks = Vec::with_capacity(udp_socks_amount);
-                for i in 0..udp_socks_amount {
-                    debug!("Creating udp stream {i} to {local_addr}.");
+                for _ in 0..udp_socks_amount {
                     let udp_sock = match new_udp_reuseport(local_addr) {
                         Ok(udp_sock) => udp_sock,
                         Err(err) => {
@@ -549,7 +548,8 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                     _ = packet_received_tx.send(());
                 }
                 debug!(
-                    "UDP connection closed {:?}", udp_sock
+                    "UDP connection closed on {}",
+                    udp_sock.local_addr().unwrap()
                 );
                 cancellation.cancel();
             });
