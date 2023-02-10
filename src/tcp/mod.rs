@@ -150,7 +150,7 @@ impl Socket {
     }
 
     pub fn local_port(&self) -> u16 {
-        self.local_addr
+        self.local_port
     }
 
     pub fn remote_addr(&self) -> SocketAddr {
@@ -158,7 +158,7 @@ impl Socket {
     }
 
     pub fn remote_port(&self) -> u16 {
-        self.remote_addr
+        self.remote_port
     }
 
     fn build_tcp_packet(&self, buf: &mut [u8], flags: u16, payload: Option<&[u8]>) -> usize {
