@@ -439,6 +439,10 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
         }
 
         let mut removable_address: Option<SocketAddr> = None;
+        
+        for (socket_addr, _tcp_peer) in addresses.iter() {
+            debug!("Addresses {:?} address.", socket_addr)
+        };
 
         let udp_socks = if first_port == 0 {
             let udp_sock = UdpSocket::bind(if remote_addr.is_ipv4() {
