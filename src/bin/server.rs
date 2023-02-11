@@ -500,8 +500,6 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             for (socket_addr, _tcp_peer) in addresses.iter() {
                 debug!("Addresses {:?} address.", socket_addr)
             };
-            addresses.get(&address).udp_peers.clone()
-            /*
             if let Some(tcp_peer) = addresses.get(&address) {
                 debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
@@ -509,7 +507,6 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 debug!("New unmatch request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
             }
-            */
         };
 
         let cancellation = CancellationToken::new();
