@@ -492,6 +492,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             };
 
             addresses.insert(tcp_sock.remote_addr(), tcp_peer);
+            debug!("New first request connection {}.", tcp_sock );
 
             udp_socks
         } else {
