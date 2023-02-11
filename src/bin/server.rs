@@ -500,7 +500,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
             } else {
-                error!("The request connection {} port {first_port} does not exists.", tcp_sock );
+                error!("The request connection {} port {} does not exists.", tcp_sock , tcp_sock.remote_addr().port());
                 continue;
             }
         };
