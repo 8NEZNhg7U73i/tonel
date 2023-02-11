@@ -499,6 +499,9 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             if let Some(tcp_peer) = addresses.get(&address) {
                 debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
+            } else {
+                error!("The request connection {} port {first_port} does not exists.", tcp_sock );
+                continue;
             }
         };
 
