@@ -501,7 +501,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 debug!("Addresses {:?} address.", socket_addr)
             };
 
-            let Some(tcp_peer) = addresses.get(&address);
+            tcp_peer = addresses.get(&address);
             debug!("New request connection {}.", tcp_sock );
             //addresses.insert(tcp_sock.remote_addr(), addresses.get(&address));
             tcp_peer.udp_peers.clone()
