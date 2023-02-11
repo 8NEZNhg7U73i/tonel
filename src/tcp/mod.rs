@@ -77,9 +77,9 @@ impl AddrTuple {
     }
 }
 
-impl std::iter::IntoIterator for AddrTuple {
-    type Item = <std::slice::Iter<AddrTuple, SocketAddr> as Iterator>::Item;
-    type IntoIter = std::slice::Iter<AddrTuple, SocketAddr>;
+impl<'a> std::iter::IntoIterator for AddrTuple {
+    type Item = <std::slice::Iter<<'a>, SocketAddr> as Iterator>::Item;
+    type IntoIter = std::slice::Iter<<'a>, SocketAddr>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.data.as_slice().into_iter()
