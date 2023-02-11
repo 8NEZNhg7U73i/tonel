@@ -504,7 +504,10 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             let Some(tcp_peer) = addresses.get(&address) 
             debug!("New request connection {}.", tcp_sock );
             addresses.insert(tcp_sock.remote_addr(), tcp_peer);
-            tcp_peer.udp_peers.clone()
+            let tcp_peer = TcpPeer {
+                udp_peers: udp_socks.clone(),
+            };
+            //tcp_peer.udp_peers.clone()
             /* else {
                 error!("The request connection {} port {} does not exists.", tcp_sock , tcp_sock.remote_addr().port());
                 continue;
