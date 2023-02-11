@@ -631,7 +631,7 @@ impl Stack {
                     };
                     tuples.remove(&tuple);
                     for i in tuples.iter() {
-                        trace!("tuple: {:?}", i.AddrTuple)
+                        trace!("tuple: {:?}", i.get(AddrTuple))
                     }
                 },
                 size = tun.recv(&mut recv_buf[..]) => {
