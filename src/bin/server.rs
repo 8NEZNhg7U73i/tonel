@@ -505,7 +505,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 debug!("New request connection {}.", tcp_sock );
                 addresses.insert(tcp_sock.remote_addr(), tcp_peer);
                 tcp_peer.udp_peers.clone()
-            }/* else {
+            };/* else {
                 error!("The request connection {} port {} does not exists.", tcp_sock , tcp_sock.remote_addr().port());
                 continue;
             }
