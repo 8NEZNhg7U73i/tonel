@@ -501,15 +501,13 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 debug!("Addresses {:?} address.", socket_addr)
             };
 
-            let Some(tcp_peer) = addresses.get(&address);
-            debug!("New request connection {}.", tcp_sock );
-            //addresses.insert(tcp_sock.remote_addr(), addresses.get(&address));
-            tcp_peer.udp_peers.clone()
-            /* else {
+            if let Some(tcp_peer) = addresses.get(&address) {
+                debug!("New request connection {}.", tcp_sock );
+                tcp_peer.udp_peers.clone()
+            } else {
                 error!("The request connection {} port {} does not exists.", tcp_sock , tcp_sock.remote_addr().port());
                 continue;
             }
-            */
         };
 
         let cancellation = CancellationToken::new();
