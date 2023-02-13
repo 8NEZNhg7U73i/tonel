@@ -82,8 +82,8 @@ impl<'a> std::iter::IntoIterator for &'a AddrTuple {
     type IntoIter = std::slice::iter<'a, SocketAddr>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.data.as_slice().local_addr;
-        self.data.as_slice().remote_addr;
+        self.AddrTuple.as_slice().local_addr;
+        self.AddrTuple.as_slice().remote_addr;
     }
 }
 
