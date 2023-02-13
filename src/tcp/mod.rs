@@ -81,7 +81,7 @@ impl<'a> std::iter::IntoIterator for &'a AddrTuple {
     type Item = <std::slice::Iter<'a, SocketAddr> as Iterator>::Item;
     type IntoIter = std::slice::Iter<'a, SocketAddr>;
 
-    fn into_iter(self) -> Self::IntoIter {
+    fn into_iter(self) {
         self.local_addr;
         self.remote_addr;
     }
@@ -91,6 +91,9 @@ struct Shared {
     tuples: DashMap<AddrTuple, SocketAsyncSender, FxBuildHasher>,
     listening: DashSet<u16, FxBuildHasher>,
     tuns: Vec<Arc<tun::AsyncQueue>>,
+    /**
+     * @var		mixed	tun_inde
+     */
     tun_index: AtomicUsize,
     ready: kanal::AsyncSender<(Socket, u16)>,
     tuples_purge: Arc<Vec<kanal::AsyncSender<AddrTuple>>>,
