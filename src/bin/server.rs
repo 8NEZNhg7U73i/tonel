@@ -334,6 +334,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             target_os = "netbsd",
             target_os = "dragonfly",
             target_os = "macos",
+            target_os = "ios"
         ))]
         assign_ipv6_address(tun.name(), tun_local6.unwrap());
         #[cfg(any(target_os = "linux", target_os = "android"))]
