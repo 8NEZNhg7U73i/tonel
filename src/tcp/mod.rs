@@ -77,6 +77,15 @@ impl AddrTuple {
     }
 }
 
+impl IntoIterator  for  AddrTuple {
+    type Item = SocketAddr;
+    type IntoIter = std::array::IntoIter<SocketAddr, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::array::IntoIter::new([self.local_addr, self.remote_addr])
+    }
+}
+
 struct Shared {
     tuples: DashMap<AddrTuple, SocketAsyncSender, FxBuildHasher>,
     listening: DashSet<u16, FxBuildHasher>,
