@@ -77,13 +77,12 @@ impl AddrTuple {
     }
 }
 
-impl<'a> std::iter::IntoIterator for &'a AddrTuple {
-    type Item = <std::slice::Iter<'a, SocketAddr> as Iterator>::Item;
-    type IntoIter = std::slice::Iter<'a, SocketAddr>;
+impl IntoIterator  for  AddrTuple {
+    type Item = SocketAddr;
+    type IntoIter = std::array::IntoIter<SocketAddr, 2>;
 
-    fn into_iter(self) {
-        self.local_addr;
-        self.remote_addr;
+    fn into_iter(self) -> Self::IntoIter {
+        std::array::IntoIter::new([self.local_addr, self.remote_addr])
     }
 }
 
@@ -644,7 +643,7 @@ impl Stack {
                     };
                     tuples.remove(&tuple);
                     for i in tuples.iter() {
-                        trace!("tuple: {:?}", &AddrTuple)
+                        trace!("tuple: {:?}", i)
                     }
                 },
                 size = tun.recv(&mut recv_buf[..]) => {
