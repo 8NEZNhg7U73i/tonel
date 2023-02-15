@@ -440,6 +440,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
         }
 
         let mut removable_address: Option<SocketAddr> = None;
+        addresses.insert(tcp_sock.remote_addr(), tcp_peer);
 
         let udp_socks = if first_port == 0 {
             let udp_sock = UdpSocket::bind(if remote_addr.is_ipv4() {
@@ -487,7 +488,6 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 udp_peers: udp_socks.clone(),
             };
 
-            addresses.insert(tcp_sock.remote_addr(), tcp_peer);
             debug!("New first request connection {}.", tcp_sock );
 
             for (socket_addr, _tcp_peer) in addresses.iter() {
