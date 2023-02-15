@@ -426,6 +426,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 res
             },
         };
+        debug!("{first_port}");
 
         let tcp_sock = Arc::new(tcp_sock);
         info!("New connection: {}", tcp_sock);
@@ -487,6 +488,11 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             };
 
             addresses.insert(tcp_sock.remote_addr(), tcp_peer);
+            debug!("New first request connection {}.", tcp_sock );
+
+            for (socket_addr, _tcp_peer) in addresses.iter() {
+                debug!("Addresses {:?} address.", socket_addr)
+            };
 
             udp_socks
         } else {
@@ -499,9 +505,10 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             };
 
             if let Some(tcp_peer) = addresses.get(&address) {
+                debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
             } else {
-                error!("The request port {first_port} does not exists.");
+                error!("The request connection {} port {} does not exists.", tcp_sock , tcp_sock.remote_addr().port());
                 continue;
             }
         };
@@ -578,7 +585,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                                     should_receive_handshake_packet = false;
                                     if let Some(ref p) = *handshake_packet {
                                         if tcp_sock.send(&mut buf, p).await.is_none() {
-                                            error!("Failed to send handshake packet to remote, closing connection.");
+                                            error!("Failed to send handshake packet to remote, closing connection {tcp_sock}.");
                                             break;
                                         }
                                         debug!("Sent handshake packet to: {}", tcp_sock);
