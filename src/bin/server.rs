@@ -42,9 +42,15 @@ cfg_if! {
 }
 
 fn main() {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(
+        target_os = "macos",
+        target_os = "ios"
+    )))]
     let tun_value_name = "tunX|fd";
-    #[cfg(target_os = "macos")]
+    #[cfg(any(
+        target_os = "macos",
+        target_os = "ios"
+    ))]
     let tun_value_name = "utunX|fd";
     let matches = Command::new("Tonel Server")
         .version(crate_version!())
@@ -348,7 +354,10 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                     local_port,
                 )
             } else if
-                #[cfg(target_os = "macos")] {
+                #[cfg(any(
+                    target_os = "macos",
+                    target_os = "ios"
+                ))] {
                 auto_rule(
                     tun.name(),
                     dev_name,
@@ -782,7 +791,10 @@ fn auto_rule(
     })
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(
+    target_os = "macos",
+    target_os = "ios"
+))]
 fn auto_rule(
     dev_name: &str,
     int_name: &str,
