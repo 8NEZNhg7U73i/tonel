@@ -480,7 +480,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             udp_socks
         } else {
-            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), tcp_sock.remote_addr().port());
+            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), first_port);
             if let Some(tcp_peer) = addresses.get(&address) {
                 tcp_peer.udp_peers.clone()
             } else {
