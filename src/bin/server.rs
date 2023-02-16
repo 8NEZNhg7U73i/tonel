@@ -426,11 +426,11 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 res
             },
         };
-        debug!("{first_port}");
-        debug!("{tcp_sock}");
 
         let tcp_sock = Arc::new(tcp_sock);
         info!("New connection: {}", tcp_sock);
+        debug!("{first_port}");
+        debug!("{tcp_sock}");
 
         let mut buf_tcp = [0u8; MAX_PACKET_LEN];
 
