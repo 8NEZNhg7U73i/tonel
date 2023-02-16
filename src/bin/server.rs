@@ -496,8 +496,8 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             udp_socks
         } else {
-            //let address = SocketAddr::new(tcp_sock.remote_addr().ip(), first_port);
-            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), tcp_sock.remote_addr().port());
+            let address = SocketAddr::new(tcp_sock.remote_addr().ip(), first_port);
+            //let address = SocketAddr::new(tcp_sock.remote_addr().ip(), tcp_sock.remote_addr().port());
             //addresses.insert(tcp_sock.remote_addr(), tcp_peer);
             debug!("request addr: {:?}", address);
             for (socket_addr, _tcp_peer) in addresses.iter() {
