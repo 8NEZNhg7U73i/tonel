@@ -505,7 +505,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             };
 
             if let Some(tcp_peer) = addresses.get(&address) {
-                addresses.insert(tcp_sock.remote_addr(), &tcp_peer);
+                addresses.insert(tcp_sock.remote_addr(), tcp_peer);
                 debug!("New request connection {}.", tcp_sock );
                 tcp_peer.udp_peers.clone()
             } else {
