@@ -427,6 +427,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
             },
         };
         debug!("{first_port}");
+        debug!("{tcp_sock}");
 
         let tcp_sock = Arc::new(tcp_sock);
         info!("New connection: {}", tcp_sock);
