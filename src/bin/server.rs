@@ -492,7 +492,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
             addresses.insert(tcp_sock.remote_addr(), tcp_peer);
             debug!("New first request connection {}.", tcp_sock );
-            debug!("New first request peer {}.", tcp_peer );
+            debug!("New first request peer {:?}.", tcp_peer );
 
             for (socket_addr, _tcp_peer) in addresses.iter() {
                 debug!("Addresses {:?} address.", socket_addr)
