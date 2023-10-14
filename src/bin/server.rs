@@ -196,6 +196,13 @@ fn main() {
                 .help("Log output level. It could be one of the following:\n\
                     off, error, warn, info, debug, trace.")
         )
+        .arg(
+            Arg::new("deadline")
+                .long("deadline")
+                .required(false)
+                .value_name("deadline")
+                .help("An open connection will be closed focibly after provided seconds. Default is disabled.")
+        )
         .get_matches();
 
     let mut log_builder = env_logger::Builder::new();
@@ -405,7 +412,11 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
     })
     .expect("Error setting Ctrl-C handler");
 
-    let mut stack = Stack::new(tun, tun_local, tun_local6);
+    let deadline = matches
+        .get_one::<String>("deadline")
+        .map(|f| f.parse::<u64>().unwrap());
+
+    let mut stack = Stack::new(tun, tun_local, tun_local6, deadline);
     stack.listen(local_port);
     info!("Listening on {}", local_port);
 

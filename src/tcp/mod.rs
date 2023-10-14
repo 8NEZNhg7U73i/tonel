@@ -46,19 +46,21 @@ use std::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::net::UdpSocket;
 use tokio::time;
 
 const TIMEOUT: time::Duration = time::Duration::from_secs(3);
 // const RETRIES: usize = 2;
-const MPMC_BUFFER_LEN: usize = 4096;
-const MPSC_BUFFER_LEN: usize = 4096;
+const MPMC_BUFFER_LEN: usize = 1024 * 64;
+const MPSC_BUFFER_LEN: usize = 1024 * 8;
 
 type SocketAsyncSender = kanal::AsyncSender<(
-    object_pool::Reusable<'static, Box<[u8; MAX_PACKET_LEN]>>,
+    opool::RefGuard<'static, ObjectPoolAllocator, Box<[u8; MAX_PACKET_LEN]>>,
     usize,
 )>;
 type SocketAsyncReceiver = kanal::AsyncReceiver<(
-    object_pool::Reusable<'static, Box<[u8; MAX_PACKET_LEN]>>,
+    opool::RefGuard<'static, ObjectPoolAllocator, Box<[u8; MAX_PACKET_LEN]>>,
     usize,
 )>;
 
@@ -84,6 +86,7 @@ struct Shared {
     tun_index: AtomicUsize,
     ready: kanal::AsyncSender<(Socket, u16)>,
     tuples_purge: Arc<Vec<kanal::AsyncSender<AddrTuple>>>,
+    deadline: Option<u64>,
 }
 
 pub struct Stack {
@@ -101,6 +104,7 @@ pub enum State {
 }
 
 pub struct Socket {
+    _reserved_socket: Option<UdpSocket>,
     shared: Arc<Shared>,
     tun: Arc<tun::AsyncQueue>,
     incoming: SocketAsyncReceiver,
@@ -109,6 +113,7 @@ pub struct Socket {
     seq: AtomicU32,
     ack: AtomicU32,
     state: State,
+    deadline: tokio::time::Instant,
 }
 
 /// A socket that represents a unique TCP connection between a server and client.
@@ -120,6 +125,7 @@ pub struct Socket {
 /// out of scope.
 impl Socket {
     fn new(
+        _reserved_socket: Option<UdpSocket>,
         shared: Arc<Shared>,
         tun: Arc<tun::AsyncQueue>,
         local_addr: SocketAddr,
@@ -130,8 +136,13 @@ impl Socket {
     ) -> (Socket, SocketAsyncSender) {
         let (incoming_tx, incoming_rx) = kanal::bounded_async(MPMC_BUFFER_LEN);
 
+        let deadline = shared.deadline.map_or_else(
+            || tokio::time::Instant::now() + Duration::from_secs(86400 * 365),
+            |f| tokio::time::Instant::now() + Duration::from_secs(f),
+        );
         (
             Socket {
+                _reserved_socket,
                 shared,
                 tun,
                 incoming: incoming_rx,
@@ -140,6 +151,7 @@ impl Socket {
                 seq: AtomicU32::new(seq),
                 ack: AtomicU32::new(ack),
                 state,
+                deadline,
             },
             incoming_tx,
         )
@@ -153,7 +165,12 @@ impl Socket {
         self.remote_addr
     }
 
-    fn build_tcp_packet(&self, buf: &mut [u8], flags: u16, payload: Option<&[u8]>) -> usize {
+    fn build_tcp_packet(
+        &self,
+        buf: &mut [u8],
+        flags: u16,
+        payload: Option<&[u8]>,
+    ) -> Result<usize, String> {
         let ack = self.ack.load(Ordering::Relaxed);
 
         build_tcp_packet(
@@ -177,7 +194,14 @@ impl Socket {
     pub async fn send(&self, buf: &mut [u8], payload: &[u8]) -> Option<()> {
         match self.state {
             State::Established => {
-                let size = self.build_tcp_packet(buf, tcp::TcpFlags::ACK, Some(payload));
+                let result = self.build_tcp_packet(buf, tcp::TcpFlags::ACK, Some(payload));
+                let size = match result {
+                    Ok(size) => size,
+                    Err(err) => {
+                        error!("Building TCP Packet error on {}: {err}", self.local_addr);
+                        return None;
+                    }
+                };
                 self.seq.fetch_add(payload.len() as u32, Ordering::Relaxed);
                 self.tun.send(&buf[..size]).await.ok().and(Some(()))
             }
@@ -197,8 +221,8 @@ impl Socket {
                     0,
                     tcp::TcpFlags::ACK,
                     None,
-                );
-
+                )
+                .unwrap();
                 self.tun.send(&buf[..size]).await.ok().and(Some(()))
             }
             _ => unreachable!(),
@@ -213,34 +237,44 @@ impl Socket {
     /// A return of `None` means the TCP connection is broken
     /// and this socket must be closed.
     pub async fn recv(&self, buf: &mut [u8]) -> Option<usize> {
+        let deadline =
+            tokio::time::sleep(self.deadline.duration_since(tokio::time::Instant::now()));
+        tokio::pin!(deadline);
+
         for _ in 0..3 {
             let mut seq_sent = false;
             loop {
                 match self.state {
                     State::Established => {
-                        let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
-                        let raw_buf = match res {
-                            Ok(raw_buf) => match raw_buf {
-                                Ok(raw_buf) => raw_buf,
-                                Err(err) => {
-                                    error!("Incoming channel recv error: {err}");
-                                    return None;
+                        let raw_buf = tokio::select! {
+                            res = time::timeout(TIMEOUT, self.incoming.recv()) => {
+                                match res {
+                                    Ok(raw_buf) => match raw_buf {
+                                        Ok(raw_buf) => raw_buf,
+                                        Err(err) => {
+                                            error!("Incoming channel recv error: {err}");
+                                            return None;
+                                        }
+                                    },
+                                    Err(err) => {
+                                        if seq_sent {
+                                            break;
+                                        }
+                                        trace!("Waiting for tcp recv timed out: {err}, sending ACK");
+                                        if self.send_keepalive(buf, 0).await.is_none() {
+                                            trace!("Connection {} unable to send idling ACK back", self);
+                                            return None;
+                                        }
+                                        seq_sent = true;
+                                        continue;
+                                    }
                                 }
-                            },
-                            Err(err) => {
-                                if seq_sent {
-                                    break;
-                                }
-                                trace!("Waiting for tcp recv timed out: {err}, sending ACK");
-                                if self.send_keepalive(buf, 0).await.is_none() {
-                                    trace!("Connection {} unable to send idling ACK back", self);
-                                    return None;
-                                }
-                                seq_sent = true;
-                                continue;
+
+                            }
+                            _ = &mut deadline => {
+                                return None;
                             }
                         };
-
                         let (_v4_packet, tcp_packet) =
                             match parse_ip_packet(&raw_buf.0[..raw_buf.1]) {
                                 Some(packet) => packet,
@@ -291,8 +325,9 @@ impl Socket {
         loop {
             match self.state {
                 State::Idle => {
-                    let size =
-                        self.build_tcp_packet(buf, tcp::TcpFlags::SYN | tcp::TcpFlags::ACK, None);
+                    let size = self
+                        .build_tcp_packet(buf, tcp::TcpFlags::SYN | tcp::TcpFlags::ACK, None)
+                        .unwrap();
                     // ACK set by constructor
                     if let Err(err) = self.tun.send(&buf[..size]).await {
                         trace!("Sent SYN + ACK error: {err}");
@@ -359,7 +394,9 @@ impl Socket {
         loop {
             match self.state {
                 State::Idle => {
-                    let size = self.build_tcp_packet(buf, tcp::TcpFlags::SYN, None);
+                    let size = self
+                        .build_tcp_packet(buf, tcp::TcpFlags::SYN, None)
+                        .unwrap();
                     if let Err(err) = self.tun.send(&buf[..size]).await {
                         trace!("Send SYN error: {err}");
                         return None;
@@ -409,7 +446,10 @@ impl Socket {
                             .store(tcp_packet.get_sequence() + 1, Ordering::Release);
 
                         // send ACK to finish handshake
-                        let size = self.build_tcp_packet(buf, tcp::TcpFlags::ACK, None);
+                        let size = self
+                            .build_tcp_packet(buf, tcp::TcpFlags::ACK, None)
+                            .unwrap();
+
                         if let Err(err) = self.tun.send(&buf[..size]).await {
                             trace!("Send ACK error: {err}");
                             break;
@@ -450,7 +490,8 @@ impl Drop for Socket {
             0,
             tcp::TcpFlags::RST,
             None,
-        );
+        )
+        .unwrap();
         tokio::spawn(async move {
             for tx in tuples_purge.iter() {
                 if let Err(err) = tx.send(tuple.clone()).await {
@@ -477,12 +518,28 @@ impl fmt::Display for Socket {
 }
 
 use once_cell::sync::Lazy;
+use opool::PoolAllocator;
 
-static GLOBAL_PACKET_POOL: Lazy<object_pool::Pool<Box<[u8; MAX_PACKET_LEN]>>> = Lazy::new(|| {
-    let pool: object_pool::Pool<Box<[u8; MAX_PACKET_LEN]>> =
-        object_pool::Pool::new(MPMC_BUFFER_LEN, || Box::new([0u8; MAX_PACKET_LEN]));
-    pool
-});
+use crate::utils::new_udp_reuseport;
+
+struct ObjectPoolAllocator;
+impl PoolAllocator<Box<[u8; MAX_PACKET_LEN]>> for ObjectPoolAllocator {
+    #[inline]
+    fn allocate(&self) -> Box<[u8; MAX_PACKET_LEN]> {
+        Box::new([0u8; MAX_PACKET_LEN])
+    }
+
+    #[inline]
+    fn reset(&self, _obj: &mut Box<[u8; MAX_PACKET_LEN]>) {}
+
+    #[inline]
+    fn is_valid(&self, _obj: &Box<[u8; MAX_PACKET_LEN]>) -> bool {
+        true
+    }
+}
+
+static GLOBAL_PACKET_POOL: Lazy<opool::Pool<ObjectPoolAllocator, Box<[u8; MAX_PACKET_LEN]>>> =
+    Lazy::new(|| opool::Pool::new(MPMC_BUFFER_LEN, ObjectPoolAllocator));
 
 /// A userspace TCP state machine
 impl Stack {
@@ -490,7 +547,12 @@ impl Stack {
     /// When more than one [`Tun`](tokio_tun::Tun) object is passed in, same amount
     /// of reader will be spawned later. This allows user to utilize the performance
     /// benefit of Multiqueue Tun support on machines with SMP.
-    pub fn new<T>(tuns: T, local_ip: Ipv4Addr, local_ip6: Option<Ipv6Addr>) -> Stack
+    pub fn new<T>(
+        tuns: T,
+        local_ip: Ipv4Addr,
+        local_ip6: Option<Ipv6Addr>,
+        timeout: Option<u64>,
+    ) -> Stack
     where
         T: tun::Device<Queue = tun::platform::Queue>,
     {
@@ -517,6 +579,7 @@ impl Stack {
             listening: DashSet::default(),
             ready: ready_tx,
             tuples_purge: Arc::new(tuples_purge_tx),
+            deadline: timeout,
         });
 
         for (index, rx) in tuples_purge_rx.into_iter().enumerate() {
@@ -549,43 +612,44 @@ impl Stack {
         addr: SocketAddr,
         seq: u32,
     ) -> Option<(Socket, u16)> {
-        for _ in 1024..u16::MAX {
-            let mut local_port = fastrand::u16(1024..);
-            if local_port < u16::MAX - 1024 {
-                local_port += 1024;
-            }
-
-            let local_addr = SocketAddr::new(
-                if addr.is_ipv4() {
-                    IpAddr::V4(self.local_ip)
-                } else {
-                    IpAddr::V6(self.local_ip6.expect("IPv6 local address undefined"))
-                },
-                local_port,
-            );
-            let tuple = AddrTuple::new(local_addr, addr);
-            let mut sock = match self.shared.tuples.entry(tuple) {
-                Entry::Occupied(_) => continue,
-                Entry::Vacant(v) => {
-                    let tun_index = self.shared.tun_index.fetch_add(1, Ordering::AcqRel)
-                        % self.shared.tuns.len();
-                    let tun = self.shared.tuns[tun_index].clone();
-                    let (sock, incoming) = Socket::new(
-                        self.shared.clone(),
-                        tun,
-                        local_addr,
-                        addr,
-                        seq,
-                        0,
-                        State::Idle,
-                    );
-                    v.insert(incoming);
-                    sock
+        let socket =
+            match new_udp_reuseport(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0)) {
+                Ok(socket) => socket,
+                Err(err) => {
+                    error!("failed creating new socket: {err}");
+                    return None;
                 }
             };
-            return sock.connect(buf).await.map(|port| (sock, port));
-        }
-        None
+        let local_addr = SocketAddr::new(
+            if addr.is_ipv4() {
+                IpAddr::V4(self.local_ip)
+            } else {
+                IpAddr::V6(self.local_ip6.expect("IPv6 local address undefined"))
+            },
+            socket.local_addr().unwrap().port(),
+        );
+        let tuple = AddrTuple::new(local_addr, addr);
+        let mut sock = match self.shared.tuples.entry(tuple) {
+            Entry::Occupied(_) => return None,
+            Entry::Vacant(v) => {
+                let tun_index =
+                    self.shared.tun_index.fetch_add(1, Ordering::AcqRel) % self.shared.tuns.len();
+                let tun = self.shared.tuns[tun_index].clone();
+                let (sock, incoming) = Socket::new(
+                    Some(socket),
+                    self.shared.clone(),
+                    tun,
+                    local_addr,
+                    addr,
+                    seq,
+                    0,
+                    State::Idle,
+                );
+                v.insert(incoming);
+                sock
+            }
+        };
+        sock.connect(buf).await.map(|port| (sock, port))
     }
 
     async fn reader_task(
@@ -597,7 +661,7 @@ impl Stack {
 
         let mut send_buf = [0u8; MAX_PACKET_LEN];
         loop {
-            let mut recv_buf = GLOBAL_PACKET_POOL.pull(|| Box::new([0u8; MAX_PACKET_LEN]));
+            let mut recv_buf = GLOBAL_PACKET_POOL.get();
 
             tokio::select! {
                 biased;
@@ -653,6 +717,7 @@ impl Stack {
                     {
                         // SYN seen on listening socket
                         let (sock, incoming) = Socket::new(
+                            None,
                             shared.clone(),
                             tun.clone(),
                             local_addr,
@@ -678,7 +743,7 @@ impl Stack {
                             tcp_packet.get_sequence() + tcp_packet.payload().len() as u32,
                             tcp::TcpFlags::RST | tcp::TcpFlags::ACK,
                             None,
-                        );
+                        ).unwrap();
                         let tun_index = shared.tun_index.fetch_add(1, Ordering::Relaxed) % shared.tuns.len();
                         let tun = shared.tuns[tun_index].clone();
                         if let Err(err) = tun.send(&send_buf[..size]).await {

@@ -195,6 +195,13 @@ fn main() {
                     off, error, warn, info, debug, trace.")
         )
         .arg(
+            Arg::new("deadline")
+                .long("deadline")
+                .required(false)
+                .value_name("deadline")
+                .help("An open connection will be closed forcibly after provided seconds. Default is disabled.")
+        )
+        .arg(
         Arg::new("tun")
             .long("tun")
             .required(false)
@@ -423,7 +430,11 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
 
     info!("Created TUN device {}", tun.name());
 
-    let stack = Arc::new(Stack::new(tun, tun_peer, tun_peer6));
+    let deadline = matches
+        .get_one::<String>("deadline")
+        .map(|f| f.parse::<u64>().unwrap());
+
+    let stack = Arc::new(Stack::new(tun, tun_peer, tun_peer6, deadline));
 
     let local_addr = local_addr.clone();
     let mut buf_r = [0u8; MAX_PACKET_LEN];
