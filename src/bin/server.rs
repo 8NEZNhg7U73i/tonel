@@ -491,6 +491,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 }
                 socks
             };
+            debug!("1{first_port}");
 
             let udp_socks = Arc::new(udp_socks);
 
