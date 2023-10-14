@@ -312,11 +312,11 @@ impl Socket {
                             && tcp_packet.payload().is_empty()
                         {
                             if tcp_packet.get_sequence() == 1 && seq_sent {
-                                trace!("Received final ACK");
+                                trace!("Received final ACK {}", self);
                                 seq_sent = false;
                                 continue;
                             } else if tcp_packet.get_sequence() == 0 {
-                                trace!("Received ACK, sending ACK");
+                                trace!("Received ACK, sending ACK {}", self);
                                 if self.send_keepalive(buf, 1).await.is_none() {
                                     trace!("Connection {} unable to send idling ACK back", self);
                                     return None;
@@ -338,7 +338,7 @@ impl Socket {
                 }
             }
         }
-        debug!("Waiting for tcp recv timed out on ACK, connection is broken");
+        debug!("Waiting for tcp recv timed out on ACK, connection {} is broken", self);
         None
     }
 
