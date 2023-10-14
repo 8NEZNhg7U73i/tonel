@@ -366,7 +366,7 @@ impl Socket {
                         Ok(buf) => match buf {
                             Ok(buf) => buf,
                             Err(err) => {
-                                error!("channel {} recv error: {err}", self);
+                                error!("Incoming channel {} recv error: {err}", self);
                                 break;
                             }
                         },
