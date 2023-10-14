@@ -755,7 +755,7 @@ impl Stack {
                             sock.accept(&mut buf, seq).await
                         });
                     } else if (tcp_packet.get_flags() & tcp::TcpFlags::RST) == 0 {
-                        trace!("Unknown TCP packet from {}, sending RST", remote_addr);
+                        trace!("Unknown TCP packet from {:?}, sending RST", tuple);
                         let size = build_tcp_packet(
                             &mut send_buf,
                             local_addr,
@@ -768,7 +768,7 @@ impl Stack {
                         let tun_index = shared.tun_index.fetch_add(1, Ordering::Relaxed) % shared.tuns.len();
                         let tun = shared.tuns[tun_index].clone();
                         if let Err(err) = tun.send(&send_buf[..size]).await {
-                            error!("tun send error: {err}");
+                            error!("tun send {:?} error: {err}", tuple);
                         }
                     }
                 }
