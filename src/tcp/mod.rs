@@ -642,6 +642,8 @@ impl Stack {
                 Err(err) => {
                     error!("failed creating new socket: {err}");
                     return None;
+                }
+            };
         for _ in 1024..u16::MAX {
             let mut local_port = fastrand::u16(1024..);
             if local_port < u16::MAX - 1024 {
@@ -674,8 +676,6 @@ impl Stack {
                     );
                     v.insert(incoming);
                     sock
-                }
-            };
         let local_addr = SocketAddr::new(
             if addr.is_ipv4() {
                 IpAddr::V4(self.local_ip)
