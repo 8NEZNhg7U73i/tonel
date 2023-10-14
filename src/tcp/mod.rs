@@ -351,11 +351,11 @@ impl Socket {
                         .unwrap();
                     // ACK set by constructor
                     if let Err(err) = self.tun.send(&buf[..size]).await {
-                        trace!("Sent SYN + ACK error: {err}");
+                        trace!("Sent SYN + ACK error {}: {err}", self);
                         break;
                     }
                     self.state = State::SynReceived;
-                    trace!("Sent SYN + ACK to client");
+                    trace!("Sent SYN + ACK to client {}", self);
                 }
                 State::SynReceived => {
                     let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
@@ -363,12 +363,12 @@ impl Socket {
                         Ok(buf) => match buf {
                             Ok(buf) => buf,
                             Err(err) => {
-                                error!("Incoming channel recv error: {err}");
+                                error!("channel {} recv error: {err}", self);
                                 break;
                             }
                         },
                         Err(err) => {
-                            trace!("Waiting for client ACK timed out: {err}");
+                            trace!("Waiting for client {} ACK timed out: {err}", self);
                             break;
                         }
                     };
