@@ -419,11 +419,11 @@ impl Socket {
                         .build_tcp_packet(buf, tcp::TcpFlags::SYN, None)
                         .unwrap();
                     if let Err(err) = self.tun.send(&buf[..size]).await {
-                        trace!("Send SYN error: {err}");
+                        trace!("Send SYN error {}: {err}", self);
                         return None;
                     }
                     self.state = State::SynSent;
-                    trace!("Sent SYN to server");
+                    trace!("Sent SYN to server {}", self);
                 }
                 State::SynSent => {
                     let res = time::timeout(TIMEOUT, self.incoming.recv()).await;
@@ -431,12 +431,12 @@ impl Socket {
                         Ok(packet_buf) => match packet_buf {
                             Ok(packet_buf) => packet_buf,
                             Err(err) => {
-                                trace!("incoming channel error: {err}");
+                                trace!("incoming channel {} error: {err}", self);
                                 break;
                             }
                         },
                         Err(err) => {
-                            trace!("Waiting for SYN + ACK timed out: {err}");
+                            trace!("Waiting for {} SYN + ACK timed out: {err}", self);
                             break;
                         }
                     };
