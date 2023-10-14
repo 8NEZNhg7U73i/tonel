@@ -254,6 +254,18 @@ impl Socket {
             let mut seq_sent = false;
             loop {
                 match self.state {
+                    State::Idle => {
+                        trace!(" idle connection {} ", self)
+                    }
+
+                    State::SynSent => {
+                        trace!(" SynSent connection {} ", self)
+                    }
+
+                    State::SynReceived => {
+                        trace!(" SynReceived connection {}", self)
+                    }
+
                     State::Established => {
                         let raw_buf = tokio::select! {
                             res = time::timeout(TIMEOUT, self.incoming.recv()) => {
