@@ -295,6 +295,8 @@ impl Socket {
                             }
                             _ = &mut deadline => {
                                 return None;
+                                trace!("Waiting for tcp {} recv timed out: {err}, sending ACK", self);
+                                    trace!("Connection {} unable to send idling ACK back", self);
                             }
                         };
                         let (_v4_packet, tcp_packet) =
