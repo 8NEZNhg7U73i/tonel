@@ -601,7 +601,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                                     should_receive_handshake_packet = false;
                                     if let Some(ref p) = *handshake_packet {
                                         if tcp_sock.send(&mut buf, p).await.is_none() {
-                                            error!("Failed to send handshake packet to remote, closing connection.");
+                                            error!("Failed to send handshake packet to remote, closing connection {tcp_sock}.");
                                             break;
                                         }
                                         debug!("Sent handshake packet to: {}", tcp_sock);
