@@ -728,7 +728,7 @@ impl Stack {
                         tuples.insert(tuple.clone(), c.clone());
                         if let Err(err) = c.send((recv_buf, size)).await {
                             drop(c);
-                            error!("Couldn't send to shared tuples channel: {err}");
+                            error!("Couldn't send to {:?} shared tuples channel: {err}", tuple);
                         }
                         continue;
                     }
