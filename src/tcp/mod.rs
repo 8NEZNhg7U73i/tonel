@@ -719,7 +719,7 @@ impl Stack {
 
                     if let Some(c) = tuples.get(&tuple) {
                         if c.send((recv_buf, size)).await.is_err() {
-                            trace!("Cache hit, but receiver already closed, dropping packet");
+                            trace!("Cache hit, but receiver {:?} already closed, dropping packet", tuple);
                         }
                         continue;
                     }
