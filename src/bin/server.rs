@@ -460,6 +460,7 @@ async fn main_async(matches: ArgMatches) -> io::Result<()> {
                 SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0)), 0)
             })
             .await;
+            debug!("0{first_port}");
 
             let udp_sock = match udp_sock {
                 Ok(udp_sock) => udp_sock,
