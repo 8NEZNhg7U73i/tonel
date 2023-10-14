@@ -695,7 +695,9 @@ impl Stack {
                         }
                     };
                     tuples.remove(&tuple);
-                    trace!("Removed cached tuple: {:?}", tuple);
+                    for i in tuples.iter() {
+                        trace!("tuple: {:?}", i)
+                    }
                 },
                 size = tun.recv(&mut recv_buf[..]) => {
                     let size = match size {
