@@ -299,6 +299,7 @@ impl Socket {
                                     trace!("Connection {} unable to send idling ACK back", self);
                             }
                         };
+
                         let (_v4_packet, tcp_packet) =
                             match parse_ip_packet(&raw_buf.0[..raw_buf.1]) {
                                 Some(packet) => packet,
