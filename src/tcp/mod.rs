@@ -676,6 +676,7 @@ impl Stack {
                     );
                     v.insert(incoming);
                     sock
+                }
         let local_addr = SocketAddr::new(
             if addr.is_ipv4() {
                 IpAddr::V4(self.local_ip)
