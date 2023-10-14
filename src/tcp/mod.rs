@@ -674,6 +674,9 @@ impl Stack {
             }
         };
         sock.connect(buf).await.map(|port| (sock, port))
+            return sock.connect(buf).await.map(|port| (sock, port));
+        }
+        None
     }
 
     async fn reader_task(
