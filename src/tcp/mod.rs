@@ -472,7 +472,7 @@ impl Socket {
                             .unwrap();
 
                         if let Err(err) = self.tun.send(&buf[..size]).await {
-                            trace!("Send ACK error: {err}");
+                            trace!("Send ACK {} error: {err}", self);
                             break;
                         }
 
