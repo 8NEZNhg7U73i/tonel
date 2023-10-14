@@ -622,7 +622,7 @@ impl TcpConnect {
         if let Some(ref packet) = *self.handshake_packet {
             should_receive_handshake_packet = true;
             if tcp_sock.send(buf, packet).await.is_none() {
-                error!("Failed to send handshake packet to remote, closing connection.");
+                error!("Failed to send handshake packet to remote, closing connection {tcp_sock}.");
                 self.cancellation.cancel();
                 return;
             }
