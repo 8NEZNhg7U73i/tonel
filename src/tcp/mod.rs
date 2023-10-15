@@ -281,7 +281,7 @@ impl Socket {
                                         if seq_sent {
                                             break;
                                         }
-                                        trace!("Waiting for tcp recv timed out: {err}, sending ACK");
+                                        trace!("Waiting for tcp {} recv timed out: {err}, sending ACK", self);
                                         if self.send_keepalive(buf, 0).await.is_none() {
                                             trace!("Connection {} unable to send idling ACK back", self);
                                             return None;
@@ -295,7 +295,6 @@ impl Socket {
                             }
                             _ = &mut deadline => {
                                 return None;
-                                trace!("Waiting for tcp {} recv timed out: {err}, sending ACK", self);
                             }
                         };
 
@@ -678,7 +677,7 @@ impl Stack {
                     sock
                 }
             }
-        }
+        };
         let local_addr = SocketAddr::new(
             if addr.is_ipv4() {
                 IpAddr::V4(self.local_ip)
