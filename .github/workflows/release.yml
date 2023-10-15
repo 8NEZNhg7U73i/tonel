@@ -97,7 +97,7 @@ jobs:
           override: true
 
       - uses: actions-rs/cargo@v1
-        if: github.test == 'true'
+        #if: github.test == 'true'
         with:
           use-cross: true
           command: build
