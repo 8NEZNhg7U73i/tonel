@@ -665,6 +665,7 @@ impl Stack {
                         % self.shared.tuns.len();
                     let tun = self.shared.tuns[tun_index].clone();
                     let (sock, incoming) = Socket::new(
+                        Some(socket),
                         self.shared.clone(),
                         tun,
                         local_addr,
@@ -676,7 +677,7 @@ impl Stack {
                     v.insert(incoming);
                     sock
                 }
-            }
+            };
         };
         let local_addr = SocketAddr::new(
             if addr.is_ipv4() {
@@ -707,7 +708,7 @@ impl Stack {
                 sock
             }
         };
-        sock.connect(buf).await.map(|port| (sock, port))
+        sock.connect(buf).await.map(|port| (sock, port));
             return sock.connect(buf).await.map(|port| (sock, port));
         }
         None
