@@ -708,7 +708,7 @@ impl Stack {
                 sock
             }
         };
-        sock.connect(buf).await.map(|port| (sock, port));
+        sock.connect(buf).await.map(|port| (sock, port))
             return sock.connect(buf).await.map(|port| (sock, port));
         }
         None
