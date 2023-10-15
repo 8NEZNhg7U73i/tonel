@@ -643,42 +643,6 @@ impl Stack {
                     return None;
                 }
             };
-        for _ in 1024..u16::MAX {
-            let mut local_port = fastrand::u16(1024..);
-            if local_port < u16::MAX - 1024 {
-                local_port += 1024;
-            }
-
-            let local_addr = SocketAddr::new(
-                if addr.is_ipv4() {
-                    IpAddr::V4(self.local_ip)
-                } else {
-                    IpAddr::V6(self.local_ip6.expect("IPv6 local address undefined"))
-                },
-                local_port,
-            );
-            let tuple = AddrTuple::new(local_addr, addr);
-            let mut sock = match self.shared.tuples.entry(tuple) {
-                Entry::Occupied(_) => continue,
-                Entry::Vacant(v) => {
-                    let tun_index = self.shared.tun_index.fetch_add(1, Ordering::AcqRel)
-                        % self.shared.tuns.len();
-                    let tun = self.shared.tuns[tun_index].clone();
-                    let (sock, incoming) = Socket::new(
-                        Some(socket),
-                        self.shared.clone(),
-                        tun,
-                        local_addr,
-                        addr,
-                        seq,
-                        0,
-                        State::Idle,
-                    );
-                    v.insert(incoming);
-                    sock
-                }
-            };
-        };
         let local_addr = SocketAddr::new(
             if addr.is_ipv4() {
                 IpAddr::V4(self.local_ip)
@@ -708,10 +672,7 @@ impl Stack {
                 sock
             }
         };
-        sock.connect(buf).await.map(|port| (sock, port));
-            return sock.connect(buf).await.map(|port| (sock, port));
-        }
-        None
+        sock.connect(buf).await.map(|port| (sock, port))
     }
 
     async fn reader_task(
