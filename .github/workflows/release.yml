@@ -45,7 +45,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         if: env.test == 'true'
         with:
-          toolchain: stable
+          toolchain: 1.71.1
           target: ${{ matrix.target }}
           override: true
 
