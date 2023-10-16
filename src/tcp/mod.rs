@@ -289,7 +289,6 @@ impl Socket {
                                         seq_sent = true;
                                         continue;
                                     }
-                                    error!("channel {} recv error: {err}", self)
                                 }
 
                             }
